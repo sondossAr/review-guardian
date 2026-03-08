@@ -41,6 +41,7 @@
 ✅ **API REST** - Intégration facile dans d'autres systèmes  
 ✅ **Modèles NLP** - Sentiment analysis multilingue + traduction PL→EN  
 ✅ **Détection de patterns** - Identification de langage marketing exagéré  
+✅ **Anti-spam IA** 🆕 - Détection de répétitions excessives (spam généré par IA)  
 ✅ **Métriques détaillées** - Confiance, probabilités, features extraites  
 
 ### Démo en ligne
@@ -92,12 +93,13 @@ Avis réels    : █████████████████████
 Avis faux     : ███████ 16.9% (2,250)
 ```
 
-### Features extraites (24 au total)
+### Features extraites (25 au total)
 
 **Statistiques textuelles:**
 - Nombre de mots, caractères, phrases
 - Longueur moyenne des mots
 - Diversité lexicale (ratio mots uniques)
+- **Ratio de répétition** 🆕 (détection spam IA/bot)
 
 **Ponctuation & style:**
 - Points d'exclamation/interrogation
@@ -114,6 +116,11 @@ Avis faux     : ███████ 16.9% (2,250)
 - Appels à l'action
 - Ton publicitaire
 - Perfection suspecte
+
+**Détection anti-spam IA:**
+- Stemming français pour détecter variations (mauvais/mauvaise/mauvaises)
+- Comptage mots répétés 2+ fois (hors stop words)
+- Pénalité graduée: 15-35% selon intensité répétition
 
 ---
 
