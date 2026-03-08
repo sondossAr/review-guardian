@@ -1,17 +1,16 @@
-# Streamlit Cloud runtime dependencies (minimal)
-streamlit==1.53.1
-pandas==2.2.3
-numpy==1.26.4
-scikit-learn==1.7.2
-joblib==1.5.2
+# Streamlit Cloud runtime dependencies (Python 3.14 compatible)
+streamlit>=1.30.0
+pandas>=2.0.0
+numpy>=1.24.0,<2.0.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
 
-transformers==4.36.0
-torch==2.5.1
-sentencepiece==0.2.0
-accelerate==1.13.0
-safetensors==0.6.2
+transformers>=4.30.0,<5.0.0
+torch>=2.0.0
+sentencepiece>=0.1.99
+accelerate>=0.20.0
+safetensors>=0.3.1
 
-textblob==0.19.0
-nltk==3.9.1
-python-dotenv==1.0.1
-tqdm==4.67.1
+textblob>=0.17.0
+nltk>=3.8.0
+python-dotenv>=1.0.0
