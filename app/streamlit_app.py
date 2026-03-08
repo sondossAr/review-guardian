@@ -406,7 +406,6 @@ def extract_features(text: str, rating: int = 5, sentiment_model=None) -> dict:
     uppercase_ratio = uppercase_count / max(1, len(text))
     
     # Diversité lexicale
-    import re
     # Nettoyer le texte : enlever ponctuation pour mieux compter les répétitions
     clean_text = re.sub(r'[^\w\s]', ' ', text.lower())
     words = clean_text.split()
