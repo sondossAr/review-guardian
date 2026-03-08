@@ -11,6 +11,12 @@ from pathlib import Path
 import re
 from transformers import pipeline
 import torch
+import os
+
+# Optimisation CPU Intel - utiliser tous les coeurs
+os.environ["OMP_NUM_THREADS"] = str(os.cpu_count())
+os.environ["MKL_NUM_THREADS"] = str(os.cpu_count())
+torch.set_num_threads(os.cpu_count())
 
 # =============================================================================
 # DETECTION DES PATTERNS MARKETING
@@ -149,65 +155,67 @@ NEGATIONS_FR = [
 
 
 # =============================================================================
-# ANALYSE DE SENTIMENT BASEE SUR BERT
+# ANALYSE DE SENTIMENT BASEE SUR BERT + TRADUCTION
 # =============================================================================
 
-@st.cache_resource
+# Chemin du cache local pour les modèles Hugging Face
+HF_CACHE_DIR = Path(__file__).parent.parent / 'models' / 'hf_cache'
+
+@st.cache_resource(show_spinner=False)
 def load_sentiment_model():
     """
     Charge le modèle de sentiment BERT multilingue.
-    Supporte : français, polonais, anglais, allemand, espagnol, italien.
-    Retourne des notes de 1 à 5 étoiles.
+    Le modèle supporte directement le polonais, français, anglais, etc.
+    Utilise le cache local pour éviter les téléchargements répétés.
+    Optimisé pour CPU Intel.
     """
     try:
-        # Modèle multilingue - même que celui utilisé pour l'entraînement
+        cache_dir = str(HF_CACHE_DIR) if HF_CACHE_DIR.exists() else None
+        
+        # Modèle de sentiment multilingue (supporte directement le polonais)
         sentiment_pipeline = pipeline(
             "sentiment-analysis",
             model="nlptown/bert-base-multilingual-uncased-sentiment",
-            device="cuda" if torch.cuda.is_available() else "cpu",
+            device="cpu",
+            torch_dtype=torch.float32,
             truncation=True,
-            max_length=512
+            max_length=512,
+            model_kwargs={"cache_dir": cache_dir, "low_cpu_mem_usage": True} if cache_dir else {"low_cpu_mem_usage": True}
         )
-        return sentiment_pipeline, None
+        
+        return {"sentiment": sentiment_pipeline}, None
     except Exception as e:
         return None, str(e)
 
 
 def analyze_sentiment_bert(text, sentiment_model):
     """
-    Analyse du sentiment avec le modèle BERT.
+    Analyse du sentiment avec BERT multilingue.
+    Supporte directement le polonais, français, anglais, etc.
     Retourne la polarité (-1 à 1) et la subjectivité (0 à 1)
     """
     if sentiment_model is None:
         return analyze_sentiment_lexicon(text)
     
     try:
-        # Obtention de la prédiction
-        result = sentiment_model(text[:512])[0]  # Tronquer à 512 caractères
+        text_str = str(text)[:500]  # Limiter la longueur
+        
+        sentiment_pipeline = sentiment_model.get("sentiment")
+        
+        if sentiment_pipeline is None:
+            return analyze_sentiment_lexicon(text)
+        
+        # Analyser le sentiment directement (BERT multilingue)
+        result = sentiment_pipeline(text_str)[0]
         label = result['label']
         score = result['score']
         
-        # Conversion en polarité selon la sortie du modèle
-        # modèle cmarkea : 1 étoile à 5 étoiles
-        if label in ['1 star', '1', 'LABEL_0']:
-            polarity = -1.0 * score
-        elif label in ['2 stars', '2', 'LABEL_1']:
-            polarity = -0.5 * score
-        elif label in ['3 stars', '3', 'LABEL_2']:
-            polarity = 0.0
-        elif label in ['4 stars', '4', 'LABEL_3']:
-            polarity = 0.5 * score
-        elif label in ['5 stars', '5', 'LABEL_4']:
-            polarity = 1.0 * score
-        # Gérer les labels positif/négatif
-        elif 'positive' in label.lower() or 'pos' in label.lower():
-            polarity = score
-        elif 'negative' in label.lower() or 'neg' in label.lower():
-            polarity = -score
-        else:
-            polarity = 0.0
+        # Conversion étoiles → polarité (même formule que l'entraînement)
+        # Label format: "1 star", "2 stars", ..., "5 stars"
+        stars = int(label.split()[0])
+        polarity = (stars - 3) / 2  # 1→-1, 3→0, 5→+1
         
-        # Subjectivité basée sur la confiance - plus haute confiance = opinion plus subjective
+        # Subjectivité = confiance du modèle
         subjectivity = score
         
         return polarity, subjectivity
@@ -319,26 +327,38 @@ st.markdown("""
 @st.cache_resource
 def load_model():
     """Charge le modèle entraîné et ses artefacts"""
+    import warnings
+    warnings.filterwarnings('ignore', category=UserWarning)
+    
     models_dir = Path(__file__).parent.parent / 'models'
     
     try:
         # Essayer de charger Gradient Boosting (meilleur par F1-Score)
         # Repli sur Random Forest si non trouvé
         if (models_dir / 'best_gb_model.joblib').exists():
-            model = joblib.load(models_dir / 'best_gb_model.joblib')
+            # Forcer le rechargement sans cache avec mmap_mode=None
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                model = joblib.load(models_dir / 'best_gb_model.joblib', mmap_mode=None)
             model_type = "Gradient Boosting"
         elif (models_dir / 'best_model.joblib').exists():
-            model = joblib.load(models_dir / 'best_model.joblib')
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                model = joblib.load(models_dir / 'best_model.joblib', mmap_mode=None)
             model_type = "Best Model"
         else:
-            model = joblib.load(models_dir / 'best_rf_model.joblib')
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                model = joblib.load(models_dir / 'best_rf_model.joblib', mmap_mode=None)
             model_type = "Random Forest"
         
-        scaler = joblib.load(models_dir / 'scaler.joblib')
-        feature_cols = joblib.load(models_dir / 'feature_columns.joblib')
+        scaler = joblib.load(models_dir / 'scaler.joblib', mmap_mode=None)
+        feature_cols = joblib.load(models_dir / 'feature_columns.joblib', mmap_mode=None)
         return model, scaler, feature_cols, None, model_type
     except Exception as e:
-        return None, None, None, str(e), None
+        import traceback
+        error_msg = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+        return None, None, None, error_msg, None
 
 
 def get_sentiment_label(polarity):

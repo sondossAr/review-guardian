@@ -205,3 +205,14 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# User exclusions - fichiers de déploiement et documentation
+*.png
+*.txt
+*.md
+*.bat
+!README.md
+!requirements.txt
+
+# ML cache local (ne pas versionner)
+models/hf_cache/
