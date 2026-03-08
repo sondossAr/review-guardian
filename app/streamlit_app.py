@@ -616,14 +616,7 @@ def main():
         
         st.divider()
         
-        st.header("📊 À propos du modèle")
-        st.write(f"**Type:** {model_type}")
-        st.write(f"**Features:** {len(feature_cols)}")
-        st.write(f"**Sentiment:** CamemBERT" if sentiment_model else "**Sentiment:** Lexique")
-        
-        st.divider()
-        
-        st.header("💡 Exemples")
+        st.header(" Exemples")
         if st.button("📝 Exemple Authentique"):
             st.session_state['example_text'] = """Super restaurant ! Nous y sommes allés hier soir en famille. 
 Le service était un peu long mais la nourriture excellente. 
