@@ -406,7 +406,11 @@ def extract_features(text: str, rating: int = 5, sentiment_model=None) -> dict:
     uppercase_ratio = uppercase_count / max(1, len(text))
     
     # Diversité lexicale
-    words = text.lower().split()
+    import re
+    # Nettoyer le texte : enlever ponctuation pour mieux compter les répétitions
+    clean_text = re.sub(r'[^\w\s]', ' ', text.lower())
+    words = clean_text.split()
+    words = [w for w in words if w]  # Enlever les chaînes vides
     unique_words = set(words)
     lexical_diversity = len(unique_words) / max(1, len(words))
     
@@ -414,13 +418,36 @@ def extract_features(text: str, rating: int = 5, sentiment_model=None) -> dict:
     word_repetition_ratio = 0
     if len(words) > 5:
         from collections import Counter
-        word_counts = Counter(words)
-        # Trouver les mots répétés (>2 fois) hors mots vides
+        
+        # Stemming simple français : garder les 4-5 premiers caractères pour grouper les variations
+        def simple_stem(word):
+            """Stemming basique pour détecter mauvais/mauvaise, déçu/déçue, etc."""
+            if len(word) <= 4:
+                return word
+            # Enlever terminaisons courantes
+            if word.endswith(('ment', 'ation', 'ement')):
+                return word[:-4]
+            if word.endswith(('ant', 'ent', 'aux', 'eux', 'ais', 'ait')):
+                return word[:-3]
+            if word.endswith(('es', 'ée', 'és')):
+                return word[:-2]
+            if word.endswith(('e', 's')):
+                return word[:-1]
+            return word
+        
+        # Stemmer les mots pour détecter les variations
+        stemmed_words = [simple_stem(w) for w in words]
+        word_counts = Counter(stemmed_words)
+        
+        # Trouver les mots répétés (>=2 fois) hors mots vides
         stop_words = {'le', 'la', 'les', 'un', 'une', 'des', 'et', 'ou', 'mais', 'à', 'de', 'du', 
-                     'pour', 'par', 'dans', 'sur', 'est', 'sont', 'était', 'the', 'a', 'an', 'and', 
-                     'or', 'but', 'to', 'of', 'in', 'on', 'is', 'was', 'were'}
+                     'pour', 'par', 'dans', 'sur', 'est', 'sont', 'était', 'ne', 'pas', 'vraiment',
+                     'the', 'a', 'an', 'and', 'or', 'but', 'to', 'of', 'in', 'on', 'is', 'was', 'were',
+                     'très', 'beaucoup', 'aussi', 'tout', 'toute'}
+        
+        # Compter mots significatifs répétés 2+ fois (après stemming)
         repeated_count = sum(1 for word, count in word_counts.items() 
-                           if count > 2 and word not in stop_words and len(word) > 3)
+                           if count >= 2 and word not in stop_words and len(word) > 3)
         word_repetition_ratio = repeated_count / max(1, len(unique_words))
     
     # Analyse de sentiment - UTILISER LE MODELE BERT (CamemBERT pour le français)
