@@ -410,6 +410,19 @@ def extract_features(text: str, rating: int = 5, sentiment_model=None) -> dict:
     unique_words = set(words)
     lexical_diversity = len(unique_words) / max(1, len(words))
     
+    # NOUVEAU : Détection répétition excessive (indicateur de spam IA)
+    word_repetition_ratio = 0
+    if len(words) > 5:
+        from collections import Counter
+        word_counts = Counter(words)
+        # Trouver les mots répétés (>2 fois) hors mots vides
+        stop_words = {'le', 'la', 'les', 'un', 'une', 'des', 'et', 'ou', 'mais', 'à', 'de', 'du', 
+                     'pour', 'par', 'dans', 'sur', 'est', 'sont', 'était', 'the', 'a', 'an', 'and', 
+                     'or', 'but', 'to', 'of', 'in', 'on', 'is', 'was', 'were'}
+        repeated_count = sum(1 for word, count in word_counts.items() 
+                           if count > 2 and word not in stop_words and len(word) > 3)
+        word_repetition_ratio = repeated_count / max(1, len(unique_words))
+    
     # Analyse de sentiment - UTILISER LE MODELE BERT (CamemBERT pour le français)
     sentiment_polarity, sentiment_subjectivity = analyze_sentiment_bert(text, sentiment_model)
     
@@ -464,6 +477,7 @@ def extract_features(text: str, rating: int = 5, sentiment_model=None) -> dict:
         'question_count': question_count,
         'uppercase_ratio': uppercase_ratio,
         'lexical_diversity': lexical_diversity,
+        'word_repetition_ratio': word_repetition_ratio,
         'sentiment_polarity': sentiment_polarity,
         'sentiment_subjectivity': sentiment_subjectivity,
         'rating_sentiment_mismatch': rating_sentiment_mismatch,
@@ -522,6 +536,7 @@ def predict_review(text: str, rating: int, model, feature_cols, sentiment_model=
     perfection_score = features.get('perfection_score', 0)
     exclamation = features.get('exclamation_count', 0)
     uppercase_ratio = features.get('uppercase_ratio', 0)
+    word_repetition = features.get('word_repetition_ratio', 0)
     
     # Calcul de la pénalité pour les patterns suspects
     penalty = 0.0
@@ -551,6 +566,14 @@ def predict_review(text: str, rating: int, model, feature_cols, sentiment_model=
         penalty += 0.15
     elif too_perfect >= 1:
         penalty += 0.08
+    
+    # Répétition excessive (signe de spam IA ou bot)
+    if word_repetition >= 0.3:
+        penalty += 0.35  # Très suspect
+    elif word_repetition >= 0.2:
+        penalty += 0.25
+    elif word_repetition >= 0.1:
+        penalty += 0.15
     
     # Ponctuation/majuscules excessives
     if exclamation >= 5:
@@ -766,6 +789,13 @@ Je suis fan absolu, c'est un coup de coeur total ! Tout était parfait sans exce
                 warnings.append(f"🚨 Score de spam élevé: {features.get('spam_score'):.1f}")
             if features.get('perfection_score', 0) >= 2:
                 warnings.append(f"⭐ Avis suspicieusement parfait")
+            
+            # Alerte critique: répétition excessive (spam IA/bot)
+            word_rep = features.get('word_repetition_ratio', 0)
+            if word_rep >= 0.2:
+                warnings.append(f"🤖 RÉPÉTITION EXCESSIVE détectée - Possible spam IA ({word_rep:.0%})")
+            elif word_rep >= 0.1:
+                warnings.append(f"🔁 Répétitions suspectes détectées ({word_rep:.0%})")
             
             if warnings:
                 for w in warnings:
