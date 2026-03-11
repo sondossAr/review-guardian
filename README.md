@@ -19,6 +19,7 @@
 - [📊 Dataset GMR-PL](#-dataset-gmr-pl)
 - [🧠 Modèles & Performances](#-modèles--performances)
 - [🏗️ Architecture technique](#️-architecture-technique)
+- [👥 Cas d'utilisation (UML)](#-cas-dutilisation-uml)
 - [⚡ Démarrage rapide](#-démarrage-rapide)
 - [📦 Installation détaillée](#-installation-détaillée)
 - [🚀 Utilisation](#-utilisation)
@@ -236,6 +237,44 @@ Avis faux     : ███████ 16.9% (2,250)
 │  ├── scaler.joblib               (StandardScaler)      │
 │  └── feature_columns.joblib      (Feature names)       │
 └─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 👥 Cas d'utilisation (UML)
+
+Le diagramme UML formel des cas d'utilisation est disponible ici :
+
+- [docs/use_case_diagram.puml](docs/use_case_diagram.puml)
+
+### Aperçu rapide (Mermaid)
+
+```mermaid
+flowchart LR
+  U[Utilisateur final]
+  A[Administrateur / Intégrateur API]
+  S((Review Guardian))
+
+  UC1([Soumettre un avis\n(mode classique)])
+  UC2([Consulter le résultat\nd'analyse])
+  UC3([Analyser un avis\nen mode chat])
+  UC4([Consulter les détails\nd'analyse])
+  UC5([Analyser des avis\nen lot via API])
+  UC6([Consulter la\ndocumentation API])
+
+  U --> UC1
+  U --> UC2
+  U --> UC3
+  U --> UC4
+  A --> UC5
+  A --> UC6
+
+  UC1 --- S
+  UC2 --- S
+  UC3 --- S
+  UC4 --- S
+  UC5 --- S
+  UC6 --- S
 ```
 
 ---
@@ -591,7 +630,7 @@ graph TB
 
 ### Explicabilité
 
-- **Feature importance:** SHAP values calculées
+- **Feature importance:** importance des variables calculée via `feature_importances_` (modèle arbre)
 - **Top 5 features importantes:**
   1. Sentiment polarity (0.187)
   2. Lexical diversity (0.153)
