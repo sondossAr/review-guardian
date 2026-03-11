@@ -1,0 +1,74 @@
+@startuml
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+
+entity "accounts (raw)" as accounts {
+  * _id : string <<PK>>
+  --
+  is_deleted : bool
+  is_private : bool
+  is_real : bool
+  local_guide_level : int
+  name_score : float
+  number_of_reviews : int
+}
+
+entity "reviews (raw)" as reviews {
+  * _id : string <<PK>>
+  --
+  account_id : string <<FK>>
+  content : text
+  content_translated : text
+  rating : int
+  date : datetime
+  is_real : bool
+  type_of_object : string
+  response_content : text
+  photos_urls : text
+  cluster : int
+  localization_missing : bool
+  not_in_poland : bool
+}
+
+entity "reviews_cleaned (processed)" as reviews_cleaned {
+  * review_id : string <<PK/FK>>
+  --
+  account_id : string <<FK>>
+  review_text : text
+  content_translated : text
+  rating : int
+  date : datetime
+  is_real : bool
+  is_real_account : bool
+  local_guide_level : int
+  number_of_reviews : int
+}
+
+entity "features_extracted (processed)" as features_extracted {
+  * review_id : string <<PK/FK>>
+  --
+  text_length : int
+  word_count : int
+  sentence_count : int
+  exclamation_count : int
+  question_count : int
+  caps_ratio : float
+  unique_words_ratio : float
+  avg_word_length : float
+  sentiment_polarity : float
+  sentiment_subjectivity : float
+  review_text_en : text
+}
+
+accounts ||--o{ reviews : "account_id"
+reviews ||--o| reviews_cleaned : "cleaning"
+reviews_cleaned ||--|| features_extracted : "feature engineering"
+accounts ||--o{ reviews_cleaned : "account_id"
+
+note right of features_extracted
+  Table utilisée pour l'entraînement
+  des modèles de classification.
+end note
+
+@enduml

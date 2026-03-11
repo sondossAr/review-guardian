@@ -20,6 +20,7 @@
 - [🧠 Modèles & Performances](#-modèles--performances)
 - [🏗️ Architecture technique](#️-architecture-technique)
 - [👥 Cas d'utilisation (UML)](#-cas-dutilisation-uml)
+- [🗃️ Modèle conceptuel des données](#️-modèle-conceptuel-des-données)
 - [⚡ Démarrage rapide](#-démarrage-rapide)
 - [📦 Installation détaillée](#-installation-détaillée)
 - [🚀 Utilisation](#-utilisation)
@@ -280,6 +281,19 @@ flowchart LR
   UC5 --- S
   UC6 --- S
 ```
+
+---
+
+## 🗃️ Modèle conceptuel des données
+
+Le modèle conceptuel des données est formalisé sous forme de diagramme entité-relation (ERD).
+
+- Source UML/ER : [docs/data_model_erd.puml](docs/data_model_erd.puml)
+- Version vectorielle (mémoire) : [docs/data_model_erd.svg](docs/data_model_erd.svg)
+
+### Image du diagramme (PNG)
+
+![Modèle conceptuel des données (ERD)](docs/data_model_erd.png)
 
 ---
 
