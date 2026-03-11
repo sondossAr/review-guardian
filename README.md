@@ -247,6 +247,10 @@ Le diagramme UML formel des cas d'utilisation est disponible ici :
 
 - [docs/use_case_diagram.puml](docs/use_case_diagram.puml)
 
+### Image du diagramme (PNG)
+
+![Diagramme UML de cas d'utilisation](docs/use_case_diagram.png)
+
 ### Aperçu rapide (Mermaid)
 
 ```mermaid
@@ -255,12 +259,12 @@ flowchart LR
   A[Administrateur / Intégrateur API]
   S((Review Guardian))
 
-  UC1([Soumettre un avis\n(mode classique)])
-  UC2([Consulter le résultat\nd'analyse])
-  UC3([Analyser un avis\nen mode chat])
-  UC4([Consulter les détails\nd'analyse])
-  UC5([Analyser des avis\nen lot via API])
-  UC6([Consulter la\ndocumentation API])
+  UC1([Soumettre un avis<br/>mode classique])
+  UC2([Consulter le résultat<br/>d'analyse])
+  UC3([Analyser un avis<br/>en mode chat])
+  UC4([Consulter les détails<br/>d'analyse])
+  UC5([Analyser des avis<br/>en lot via API])
+  UC6([Consulter la<br/>documentation API])
 
   U --> UC1
   U --> UC2
