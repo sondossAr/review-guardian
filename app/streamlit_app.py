@@ -25,6 +25,12 @@ def _to_int(value: str, default: int) -> int:
         return default
 
 
+def _to_bool(value: str, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _resolve_path(raw_path: str, fallback: Path) -> Path:
     if not raw_path:
         return fallback
@@ -43,6 +49,7 @@ STREAMLIT_MODEL_FALLBACK = os.getenv("STREAMLIT_MODEL_FALLBACK", "best_rf_model.
 SCALER_FILE = os.getenv("SCALER_FILE", "scaler.joblib")
 FEATURE_COLUMNS_FILE = os.getenv("FEATURE_COLUMNS_FILE", "feature_columns.joblib")
 SENTIMENT_MODEL_NAME = os.getenv("SENTIMENT_MODEL_NAME", "nlptown/bert-base-multilingual-uncased-sentiment")
+SHOW_FALLBACK_WARNING = _to_bool(os.getenv("SHOW_FALLBACK_WARNING", "false"), False)
 
 # Optimisation CPU Intel - utiliser tous les coeurs
 os.environ["OMP_NUM_THREADS"] = str(APP_THREADS)
@@ -699,10 +706,13 @@ def main():
     
     # Chargement du modèle
     model, scaler, feature_cols, error, model_type = load_model()
+    fallback_message = None
     
     if error:
-        st.warning(f"⚠️ Modèles ML introuvables: {error}")
-        st.info("💡 Mode fallback activé (analyse heuristique). Pour les performances optimales, fournissez les fichiers .joblib dans models/.")
+        fallback_message = f"Mode fallback activé: {error}"
+        if SHOW_FALLBACK_WARNING:
+            st.warning(f"⚠️ Modèles ML introuvables: {error}")
+            st.info("💡 Mode fallback activé (analyse heuristique). Pour les performances optimales, fournissez les fichiers .joblib dans models/.")
         model = None
         feature_cols = []
         model_type = "Heuristique (sans modèle ML)"
@@ -717,6 +727,11 @@ def main():
     # Barre latérale
     with st.sidebar:
         st.header("⚙️ Configuration")
+
+        if model is None:
+            st.caption("Mode actuel: Heuristique (fallback)")
+            if SHOW_FALLBACK_WARNING and fallback_message:
+                st.caption(fallback_message)
         
         rating = st.slider("Note de l'avis", 1, 5, 5, help="Note donnée par l'utilisateur")
         
