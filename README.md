@@ -54,7 +54,7 @@
 
 ## 🎓 Contexte académique
 
-**Projet de mémoire - Master 5MEM**  
+**Projet de mémoire**  
 **Sujet:** Détection automatique de faux avis en ligne par apprentissage automatique  
 **Objectif:** Contribuer à la lutte contre la fraude numérique et restaurer la confiance des consommateurs
 
@@ -704,7 +704,7 @@ in the Software without restriction...
 
 ## 👥 Auteur
 
-**Projet académique - Master 5MEM**
+**Projet académique - mémoire**
 
 📧 Contact: [Créer une issue](https://github.com/sondossAr/review-guardian/issues)  
 🌐 App en ligne: [review-guardian-as.streamlit.app](https://review-guardian-as.streamlit.app)  
