@@ -568,28 +568,10 @@ def predict_review(text: str, rating: int, model, feature_cols, sentiment_model=
     # Extraction des caractéristiques
     features = extract_features(text, rating, sentiment_model)
     
-    # Création du dataframe avec toutes les caractéristiques requises
-    df = pd.DataFrame([features])
-    
-    # Ajout des caractéristiques manquantes avec valeurs par défaut
-    for col in feature_cols:
-        if col not in df.columns:
-            df[col] = 0
-    
-    # Sélection uniquement des caractéristiques utilisées par le modèle
-    X = df[feature_cols].copy()
-    
-    # Remplissage des valeurs NaN
-    X = X.fillna(0)
-    
-    # Prédiction ML
-    ml_prediction = model.predict(X)[0]
-    ml_probability = model.predict_proba(X)[0].copy()
-    
-    # ==========================================================================
-    # APPROCHE HYBRIDE : Ajustement de la probabilité selon les signaux marketing
-    # ==========================================================================
-    
+    # ======================================================================
+    # APPROCHE HYBRIDE : signaux suspects (utilisés avec ou sans modèle ML)
+    # ======================================================================
+
     spam_score = features.get('spam_score', 0)
     superlatives = features.get('superlatives_count', 0)
     cta = features.get('cta_count', 0)
@@ -649,6 +631,42 @@ def predict_review(text: str, rating: int, model, feature_cols, sentiment_model=
     
     # Plafonner la pénalité à 0.8
     penalty = min(penalty, 0.8)
+
+    # ======================================================================
+    # Probabilités de base: modèle ML si disponible, sinon mode heuristique
+    # ======================================================================
+    if model is not None and feature_cols:
+        # Création du dataframe avec toutes les caractéristiques requises
+        df = pd.DataFrame([features])
+
+        # Ajout des caractéristiques manquantes avec valeurs par défaut
+        for col in feature_cols:
+            if col not in df.columns:
+                df[col] = 0
+
+        # Sélection uniquement des caractéristiques utilisées par le modèle
+        X = df[feature_cols].copy().fillna(0)
+
+        # Prédiction ML
+        ml_prediction = model.predict(X)[0]
+        ml_probability = model.predict_proba(X)[0].copy()
+    else:
+        # Fallback sans modèle binaire: score heuristique de suspicion
+        fake_score = 0.18
+        fake_score += min(0.30, spam_score * 0.03)
+        fake_score += min(0.15, cta * 0.08)
+        fake_score += min(0.15, advertising * 0.08)
+        fake_score += min(0.12, too_perfect * 0.06)
+        fake_score += min(0.15, rating_sentiment_mismatch * 0.25)
+
+        if uppercase_ratio >= 0.3:
+            fake_score += 0.05
+        if exclamation >= 5:
+            fake_score += 0.05
+
+        fake_score = float(np.clip(fake_score, 0.02, 0.98))
+        ml_probability = np.array([fake_score, 1 - fake_score])
+        ml_prediction = 0 if fake_score > 0.5 else 1
     
     # Ajustement des probabilités
     # probability[0] = P(Faux), probability[1] = P(Vrai)
@@ -682,9 +700,11 @@ def main():
     model, scaler, feature_cols, error, model_type = load_model()
     
     if error:
-        st.error(f"❌ Erreur de chargement du modèle: {error}")
-        st.info("💡 Ce dépôt public n'inclut pas les fichiers .joblib. Générez-les localement (retrain_models.py) ou fournissez-les dans models/ avant de lancer l'app.")
-        return
+        st.warning(f"⚠️ Modèles ML introuvables: {error}")
+        st.info("💡 Mode fallback activé (analyse heuristique). Pour les performances optimales, fournissez les fichiers .joblib dans models/.")
+        model = None
+        feature_cols = []
+        model_type = "Heuristique (sans modèle ML)"
     
     # Chargement du modèle de sentiment (CamemBERT)
     with st.spinner("🧠 Chargement du modèle de sentiment (CamemBERT)..."):
@@ -942,9 +962,9 @@ Je suis fan absolu, c'est un coup de coeur total ! Tout était parfait sans exce
     st.divider()
     st.markdown("""
     <p style="text-align: center; color: #888;">
-        🛡️ Review Guardian - Projet 5MEM | Modèle Gradient Boosting
+        🛡️ Review Guardian | Mode: {}
     </p>
-    """, unsafe_allow_html=True)
+    """.format(model_type), unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
