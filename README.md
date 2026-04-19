@@ -301,6 +301,16 @@ Le modèle conceptuel des données est formalisé sous forme de diagramme entit�
 
 ## ⚡ Démarrage rapide
 
+Basculer rapidement entre profils locaux:
+
+```powershell
+# Activer le profil dev
+.\switch_env.ps1 -Profile dev -Force
+
+# Activer le profil prod
+.\switch_env.ps1 -Profile prod -Force
+```
+
 ### Prérequis
 
 - Python 3.12+ (Anaconda recommandé)
