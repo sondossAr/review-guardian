@@ -357,33 +357,44 @@ def load_model():
     """Charge le modèle entraîné et ses artefacts"""
     import warnings
     warnings.filterwarnings('ignore', category=UserWarning)
-    
+
     try:
-        # Essayer de charger Gradient Boosting (meilleur par F1-Score)
-        # Repli sur Random Forest si non trouvé
-        if (MODELS_DIR / STREAMLIT_MODEL_PRIMARY).exists():
-            # Forcer le rechargement sans cache avec mmap_mode=None
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                model = joblib.load(MODELS_DIR / STREAMLIT_MODEL_PRIMARY, mmap_mode=None)
-            model_type = "Gradient Boosting"
-        elif (MODELS_DIR / STREAMLIT_MODEL_SECONDARY).exists():
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                model = joblib.load(MODELS_DIR / STREAMLIT_MODEL_SECONDARY, mmap_mode=None)
-            model_type = "Best Model"
-        else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                model = joblib.load(MODELS_DIR / STREAMLIT_MODEL_FALLBACK, mmap_mode=None)
-            model_type = "Random Forest"
-        
+        candidate_models = [
+            (STREAMLIT_MODEL_PRIMARY, "Gradient Boosting"),
+            (STREAMLIT_MODEL_SECONDARY, "Best Model"),
+            (STREAMLIT_MODEL_FALLBACK, "Random Forest"),
+        ]
+
+        selected_model_file = None
+        model_type = None
+        for model_file, label in candidate_models:
+            if (MODELS_DIR / model_file).exists():
+                selected_model_file = model_file
+                model_type = label
+                break
+
+        if selected_model_file is None:
+            expected = ", ".join([m for m, _ in candidate_models])
+            raise FileNotFoundError(
+                f"Aucun modèle trouvé dans '{MODELS_DIR}'. Fichiers attendus: {expected}"
+            )
+
+        required_files = [SCALER_FILE, FEATURE_COLUMNS_FILE]
+        missing_required = [f for f in required_files if not (MODELS_DIR / f).exists()]
+        if missing_required:
+            raise FileNotFoundError(
+                f"Fichiers manquants dans '{MODELS_DIR}': {', '.join(missing_required)}"
+            )
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            model = joblib.load(MODELS_DIR / selected_model_file, mmap_mode=None)
+
         scaler = joblib.load(MODELS_DIR / SCALER_FILE, mmap_mode=None)
         feature_cols = joblib.load(MODELS_DIR / FEATURE_COLUMNS_FILE, mmap_mode=None)
         return model, scaler, feature_cols, None, model_type
     except Exception as e:
-        import traceback
-        error_msg = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+        error_msg = str(e)
         return None, None, None, error_msg, None
 
 
@@ -672,7 +683,7 @@ def main():
     
     if error:
         st.error(f"❌ Erreur de chargement du modèle: {error}")
-        st.info("💡 Assurez-vous d'avoir exécuté les notebooks d'entraînement (02 → 05)")
+        st.info("💡 Ce dépôt public n'inclut pas les fichiers .joblib. Générez-les localement (retrain_models.py) ou fournissez-les dans models/ avant de lancer l'app.")
         return
     
     # Chargement du modèle de sentiment (CamemBERT)
