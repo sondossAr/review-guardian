@@ -206,13 +206,21 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# User exclusions - fichiers de déploiement et documentation
-*.png
-*.txt
-*.md
-*.bat
-!README.md
-!requirements.txt
+# Secrets locaux (ne pas versionner)
+.streamlit/secrets.toml
 
-# ML cache local (ne pas versionner)
+# Données projet (souvent sensibles / volumineuses)
+data/raw/
+data/processed/
+
+# Artefacts ML entraînés
+models/*.joblib
+models/*.pkl
+models/*.onnx
 models/hf_cache/
+
+# Sorties générées
+outputs/
+
+# Archives locales
+*.zip
