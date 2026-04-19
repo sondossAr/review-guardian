@@ -12,19 +12,49 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import re
+import os
 from textblob import TextBlob
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+
+def _to_int(value: str, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _resolve_path(raw_path: str, fallback: Path) -> Path:
+    if not raw_path:
+        return fallback
+    candidate = Path(raw_path)
+    if candidate.is_absolute():
+        return candidate
+    return BASE_DIR / candidate
+
+
+MODELS_DIR = _resolve_path(os.getenv("MODEL_DIR", "models"), BASE_DIR / "models")
+API_MODEL_FILE = os.getenv("API_MODEL_FILE", "best_rf_model.joblib")
+SCALER_FILE = os.getenv("SCALER_FILE", "scaler.joblib")
+FEATURE_COLUMNS_FILE = os.getenv("FEATURE_COLUMNS_FILE", "feature_columns.joblib")
+API_HOST = os.getenv("API_HOST", "0.0.0.0")
+API_PORT = _to_int(os.getenv("API_PORT", "8000"), 8000)
+ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("API_CORS_ORIGINS", "*").split(",") if origin.strip()]
 
 # Initialisation de l'application FastAPI
 app = FastAPI(
-    title="Review Guardian API",
-    description="API pour la détection de faux avis",
+    title=os.getenv("API_TITLE", "Review Guardian API"),
+    description=os.getenv("API_DESCRIPTION", "API pour la détection de faux avis"),
     version="1.0.0"
 )
 
 # Middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -158,12 +188,10 @@ async def load_model():
     """Chargement du modèle au démarrage"""
     global model, scaler, feature_cols
     
-    models_dir = Path(__file__).parent.parent / 'models'
-    
     try:
-        model = joblib.load(models_dir / 'best_rf_model.joblib')
-        scaler = joblib.load(models_dir / 'scaler.joblib')
-        feature_cols = joblib.load(models_dir / 'feature_columns.joblib')
+        model = joblib.load(MODELS_DIR / API_MODEL_FILE)
+        scaler = joblib.load(MODELS_DIR / SCALER_FILE)
+        feature_cols = joblib.load(MODELS_DIR / FEATURE_COLUMNS_FILE)
         print("✅ Modèle chargé avec succès !")
     except Exception as e:
         print(f"⚠️ Erreur lors du chargement du modèle : {e}")
@@ -328,4 +356,4 @@ L'avis présente des patterns typiques d'avis authentiques."""
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=API_HOST, port=API_PORT)

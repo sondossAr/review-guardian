@@ -386,6 +386,32 @@ Après entraînement, vérifiez la présence des artefacts dans `models/`.
 echo "SECRET_KEY=change-me" > .env
 ```
 
+Variables utiles supportées par l'application:
+
+- `API_HOST`, `API_PORT`, `API_CORS_ORIGINS`
+- `MODEL_DIR`, `API_MODEL_FILE`
+- `STREAMLIT_MODEL_PRIMARY`, `STREAMLIT_MODEL_SECONDARY`, `STREAMLIT_MODEL_FALLBACK`
+- `SCALER_FILE`, `FEATURE_COLUMNS_FILE`
+- `HF_CACHE_DIR`, `SENTIMENT_MODEL_NAME`, `APP_THREADS`
+
+Exemple rapide:
+
+```env
+API_HOST=0.0.0.0
+API_PORT=8000
+API_CORS_ORIGINS=*
+MODEL_DIR=models
+API_MODEL_FILE=best_rf_model.joblib
+STREAMLIT_MODEL_PRIMARY=best_gb_model.joblib
+STREAMLIT_MODEL_SECONDARY=best_model.joblib
+STREAMLIT_MODEL_FALLBACK=best_rf_model.joblib
+SCALER_FILE=scaler.joblib
+FEATURE_COLUMNS_FILE=feature_columns.joblib
+HF_CACHE_DIR=models/hf_cache
+SENTIMENT_MODEL_NAME=nlptown/bert-base-multilingual-uncased-sentiment
+APP_THREADS=8
+```
+
 ### Étape 5: Lancer l'application
 
 **Option A - Streamlit uniquement:**

@@ -12,11 +12,42 @@ import re
 from transformers import pipeline
 import torch
 import os
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+
+def _to_int(value: str, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _resolve_path(raw_path: str, fallback: Path) -> Path:
+    if not raw_path:
+        return fallback
+    candidate = Path(raw_path)
+    if candidate.is_absolute():
+        return candidate
+    return BASE_DIR / candidate
+
+
+APP_THREADS = max(1, _to_int(os.getenv("APP_THREADS", str(os.cpu_count() or 1)), os.cpu_count() or 1))
+MODELS_DIR = _resolve_path(os.getenv("MODEL_DIR", "models"), BASE_DIR / "models")
+HF_CACHE_DIR = _resolve_path(os.getenv("HF_CACHE_DIR", "models/hf_cache"), BASE_DIR / "models" / "hf_cache")
+STREAMLIT_MODEL_PRIMARY = os.getenv("STREAMLIT_MODEL_PRIMARY", "best_gb_model.joblib")
+STREAMLIT_MODEL_SECONDARY = os.getenv("STREAMLIT_MODEL_SECONDARY", "best_model.joblib")
+STREAMLIT_MODEL_FALLBACK = os.getenv("STREAMLIT_MODEL_FALLBACK", "best_rf_model.joblib")
+SCALER_FILE = os.getenv("SCALER_FILE", "scaler.joblib")
+FEATURE_COLUMNS_FILE = os.getenv("FEATURE_COLUMNS_FILE", "feature_columns.joblib")
+SENTIMENT_MODEL_NAME = os.getenv("SENTIMENT_MODEL_NAME", "nlptown/bert-base-multilingual-uncased-sentiment")
 
 # Optimisation CPU Intel - utiliser tous les coeurs
-os.environ["OMP_NUM_THREADS"] = str(os.cpu_count())
-os.environ["MKL_NUM_THREADS"] = str(os.cpu_count())
-torch.set_num_threads(os.cpu_count())
+os.environ["OMP_NUM_THREADS"] = str(APP_THREADS)
+os.environ["MKL_NUM_THREADS"] = str(APP_THREADS)
+torch.set_num_threads(APP_THREADS)
 
 # =============================================================================
 # DETECTION DES PATTERNS MARKETING
@@ -158,9 +189,6 @@ NEGATIONS_FR = [
 # ANALYSE DE SENTIMENT BASEE SUR BERT + TRADUCTION
 # =============================================================================
 
-# Chemin du cache local pour les modèles Hugging Face
-HF_CACHE_DIR = Path(__file__).parent.parent / 'models' / 'hf_cache'
-
 @st.cache_resource(show_spinner=False)
 def load_sentiment_model():
     """
@@ -175,7 +203,7 @@ def load_sentiment_model():
         # Modèle de sentiment multilingue (supporte directement le polonais)
         sentiment_pipeline = pipeline(
             "sentiment-analysis",
-            model="nlptown/bert-base-multilingual-uncased-sentiment",
+            model=SENTIMENT_MODEL_NAME,
             device="cpu",
             torch_dtype=torch.float32,
             truncation=True,
@@ -330,30 +358,28 @@ def load_model():
     import warnings
     warnings.filterwarnings('ignore', category=UserWarning)
     
-    models_dir = Path(__file__).parent.parent / 'models'
-    
     try:
         # Essayer de charger Gradient Boosting (meilleur par F1-Score)
         # Repli sur Random Forest si non trouvé
-        if (models_dir / 'best_gb_model.joblib').exists():
+        if (MODELS_DIR / STREAMLIT_MODEL_PRIMARY).exists():
             # Forcer le rechargement sans cache avec mmap_mode=None
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                model = joblib.load(models_dir / 'best_gb_model.joblib', mmap_mode=None)
+                model = joblib.load(MODELS_DIR / STREAMLIT_MODEL_PRIMARY, mmap_mode=None)
             model_type = "Gradient Boosting"
-        elif (models_dir / 'best_model.joblib').exists():
+        elif (MODELS_DIR / STREAMLIT_MODEL_SECONDARY).exists():
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                model = joblib.load(models_dir / 'best_model.joblib', mmap_mode=None)
+                model = joblib.load(MODELS_DIR / STREAMLIT_MODEL_SECONDARY, mmap_mode=None)
             model_type = "Best Model"
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                model = joblib.load(models_dir / 'best_rf_model.joblib', mmap_mode=None)
+                model = joblib.load(MODELS_DIR / STREAMLIT_MODEL_FALLBACK, mmap_mode=None)
             model_type = "Random Forest"
         
-        scaler = joblib.load(models_dir / 'scaler.joblib', mmap_mode=None)
-        feature_cols = joblib.load(models_dir / 'feature_columns.joblib', mmap_mode=None)
+        scaler = joblib.load(MODELS_DIR / SCALER_FILE, mmap_mode=None)
+        feature_cols = joblib.load(MODELS_DIR / FEATURE_COLUMNS_FILE, mmap_mode=None)
         return model, scaler, feature_cols, None, model_type
     except Exception as e:
         import traceback
