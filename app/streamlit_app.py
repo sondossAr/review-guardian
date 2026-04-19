@@ -578,6 +578,7 @@ def predict_review(text: str, rating: int, model, feature_cols, sentiment_model=
     advertising = features.get('advertising_count', 0)
     too_perfect = features.get('too_perfect_count', 0)
     perfection_score = features.get('perfection_score', 0)
+    rating_sentiment_mismatch = features.get('rating_sentiment_mismatch', 0)
     exclamation = features.get('exclamation_count', 0)
     uppercase_ratio = features.get('uppercase_ratio', 0)
     word_repetition = features.get('word_repetition_ratio', 0)
