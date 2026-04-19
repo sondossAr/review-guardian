@@ -218,6 +218,7 @@ data/processed/
 
 # Artefacts ML entraînés
 models/*.joblib
+!models/*.joblib
 models/*.pkl
 models/*.onnx
 models/hf_cache/

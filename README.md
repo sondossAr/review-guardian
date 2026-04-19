@@ -379,14 +379,13 @@ pip install torch --index-url https://download.pytorch.org/whl/cpu
 ### Étape 3: Vérification des modèles
 
 ```bash
-# Ce dépôt public n'inclut pas les modèles binaires (*.joblib).
-# Pour reproduire l'entraînement localement:
+# Pour réentraîner les modèles localement:
 # 1) placer le dataset GMR-PL dans data/raw/
 # 2) lancer:
 python retrain_models.py
 ```
 
-Après entraînement, vérifiez la présence des artefacts dans `models/`.
+Les artefacts entraînés sont disponibles dans `models/`.
 
 ### Étape 4: Variables d'environnement (optionnel)
 
@@ -587,7 +586,12 @@ review-guardian/
 │   ├── use_case_diagram.png
 │   └── use_case_diagram.svg
 │
-├── models/
+├── models/                       # Artefacts ML entraînés
+│   ├── best_gb_model.joblib      # Gradient Boosting
+│   ├── best_model.joblib         # Copie du meilleur modèle
+│   ├── best_rf_model.joblib      # Random Forest
+│   ├── scaler.joblib             # StandardScaler
+│   ├── feature_columns.joblib    # Noms des features
 │   └── model_results.csv         # Résultats comparatifs
 │
 ├── notebooks/                    # Notebooks Jupyter
@@ -616,7 +620,7 @@ review-guardian/
 
 ```
 
-**Fichiers générés localement (non versionnés):** `data/`, `outputs/`, `models/*.joblib`, `models/hf_cache/`, `*.zip`.
+**Fichiers générés localement (non versionnés):** `data/`, `outputs/`, `models/hf_cache/`, `*.zip`.
 
 ---
 
