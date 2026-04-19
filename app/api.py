@@ -37,7 +37,7 @@ def _resolve_path(raw_path: str, fallback: Path) -> Path:
 
 
 MODELS_DIR = _resolve_path(os.getenv("MODEL_DIR", "models"), BASE_DIR / "models")
-API_MODEL_FILE = os.getenv("API_MODEL_FILE", "best_rf_model.joblib")
+API_MODEL_FILE = os.getenv("API_MODEL_FILE", "best_gb_model.joblib")
 SCALER_FILE = os.getenv("SCALER_FILE", "scaler.joblib")
 FEATURE_COLUMNS_FILE = os.getenv("FEATURE_COLUMNS_FILE", "feature_columns.joblib")
 API_HOST = os.getenv("API_HOST", "0.0.0.0")

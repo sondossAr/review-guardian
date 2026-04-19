@@ -2,12 +2,25 @@
 
 ## 🚀 Lancer l'application
 
+### Préparation
+
+```bash
+# Depuis la racine du projet
+python -m venv .venv
+
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+
+# Installer les dépendances du projet
+pip install -r requirements.txt
+
+# (Optionnel) Appliquer un profil d'environnement
+.\switch_env.ps1 -Profile dev -Force
+```
+
 ### Option 1: Streamlit (Interface Web Interactive)
 
 ```bash
-# Activer l'environnement virtuel
-.\venv\Scripts\Activate.ps1
-
 # Lancer Streamlit
 streamlit run app/streamlit_app.py
 ```
@@ -17,14 +30,8 @@ L'application sera accessible sur: http://localhost:8501
 ### Option 2: FastAPI (API REST)
 
 ```bash
-# Activer l'environnement virtuel
-.\venv\Scripts\Activate.ps1
-
-# Installer FastAPI et Uvicorn
-pip install fastapi uvicorn
-
 # Lancer l'API
-uvicorn app.api:app --reload
+uvicorn app.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 L'API sera accessible sur: http://localhost:8000
@@ -61,5 +68,5 @@ print(response.json())
 ## 📦 Dépendances
 
 ```bash
-pip install streamlit fastapi uvicorn textblob
+pip install -r requirements.txt
 ```

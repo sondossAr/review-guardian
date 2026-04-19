@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [ValidateSet("dev", "prod")]
     [string]$Profile,
 
@@ -16,7 +16,15 @@ if ($List) {
     Write-Host "Profils disponibles:" -ForegroundColor Cyan
     if (Test-Path $envDev) { Write-Host "- dev  (.env.dev)" }
     if (Test-Path $envProd) { Write-Host "- prod (.env.prod)" }
+    Write-Host ""
+    Write-Host "Usage: .\switch_env.ps1 -Profile dev|prod [-Force]"
     exit 0
+}
+
+if (-not $Profile) {
+    Write-Host "Usage: .\switch_env.ps1 -Profile dev|prod [-Force]" -ForegroundColor Yellow
+    Write-Host "       .\switch_env.ps1 -List"
+    exit 1
 }
 
 $sourceEnv = switch ($Profile) {

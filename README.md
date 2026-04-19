@@ -409,9 +409,9 @@ Exemple rapide:
 ```env
 API_HOST=0.0.0.0
 API_PORT=8000
-API_CORS_ORIGINS=*
+API_CORS_ORIGINS=http://localhost:8501,http://127.0.0.1:8501
 MODEL_DIR=models
-API_MODEL_FILE=best_rf_model.joblib
+API_MODEL_FILE=best_gb_model.joblib
 STREAMLIT_MODEL_PRIMARY=best_gb_model.joblib
 STREAMLIT_MODEL_SECONDARY=best_model.joblib
 STREAMLIT_MODEL_FALLBACK=best_rf_model.joblib
@@ -725,7 +725,7 @@ in the Software without restriction...
 ## 📚 Références
 
 1. **Dataset GMR-PL**: Google Maps Reviews - Polish Language Dataset  
-  Source: publication académique à référencer (lien DOI/arXiv à ajouter)
+  Source: à compléter avec le DOI/arXiv officiel utilisé dans le mémoire
 
 2. **BERT Multilingual Sentiment**:  
    https://huggingface.co/nlptown/bert-base-multilingual-uncased-sentiment
