@@ -381,13 +381,9 @@ Après entraînement, vérifiez la présence des artefacts dans `models/`.
 ### Étape 4: Variables d'environnement (optionnel)
 
 ```bash
-# Linux/macOS
-cp .env.example .env
-
-# Windows PowerShell
-Copy-Item .env.example .env
-
-# Éditer .env si besoin
+# Créer un fichier .env local (non versionné)
+# Exemple minimal:
+echo "SECRET_KEY=change-me" > .env
 ```
 
 ### Étape 5: Lancer l'application
@@ -575,7 +571,6 @@ review-guardian/
 │   ├── config.toml               # Thème et paramètres
 │   └── secrets.toml.example      # Template secrets
 │
-├── .env.example                  # Template variables env
 ├── .gitignore                    # Fichiers ignorés Git
 ├── requirements.txt              # Dépendances Python
 │
